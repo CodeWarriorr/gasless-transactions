@@ -135,9 +135,16 @@ contract Forwarder is IForwarder, ERC165 {
             chainId,
             address(this));
 
+        console.log("registerDomainSeparator domainValue");
+        console.logBytes(domainValue);
+
         bytes32 domainHash = keccak256(domainValue);
 
         domains[domainHash] = true;
+
+        console.log("registerDomainSeparator domainHash");
+        console.logBytes32(domainHash);
+
         emit DomainRegistered(domainHash, domainValue);
     }
 
@@ -157,8 +164,12 @@ contract Forwarder is IForwarder, ERC165 {
     internal
     virtual
     view
-    {
+    {   
+        console.log("domainSeparator");
+        console.logBytes32(domainSeparator);
+        console.log('domains[domainSeparator]', domains[domainSeparator]);
         require(domains[domainSeparator], "FWD: unregistered domain sep.");
+        console.log('typeHashes[requestTypeHash]', typeHashes[requestTypeHash]);
         require(typeHashes[requestTypeHash], "FWD: unregistered typehash");
         bytes32 digest = keccak256(abi.encodePacked(
                 "\x19\x01", domainSeparator,

@@ -27,14 +27,13 @@ import "./interfaces/IRelayHub.sol";
 import "./interfaces/IPaymaster.sol";
 import "./interfaces/IRelayRegistrar.sol";
 import "./interfaces/IStakeManager.sol";
-
 import "../interfaces/IForwarder.sol";
 
 /**
  * @title The RelayHub Implementation
  * @notice This contract implements the `IRelayHub` interface for the EVM-compatible networks.
  */
-contract RelayHubWTF is IRelayHub, Ownable, ERC165 {
+contract RelayHub is IRelayHub, Ownable, ERC165 {
     using ERC165Checker for address;
     using Address for address;
 
@@ -42,7 +41,7 @@ contract RelayHubWTF is IRelayHub, Ownable, ERC165 {
 
     /// @inheritdoc IRelayHub
     function versionHub() override virtual public pure returns (string memory){
-        return "3.0.0-beta.0+opengsn.hub.irelayhub";
+        return "3.0.0-beta.2+opengsn.hub.irelayhub";
     }
 
     IStakeManager internal immutable stakeManager;
@@ -368,10 +367,11 @@ contract RelayHubWTF is IRelayHub, Ownable, ERC165 {
         vars.innerGasUsed = vars.gasBeforeInner-aggregateGasleft();
 
         // #if ENABLE_CONSOLE_LOG
-        console.log("relayCall success", vars.success);
-        console.log("relayCall innerGasUsed", vars.innerGasUsed);
+        console.log("relayCall RelayHub.innerRelayCall success", vars.success);
+        console.log("relayCall RelayHub.innerRelayCall innerGasUsed", vars.innerGasUsed);
+        console.log("relayCall RelayHub.innerRelayCall relayCallStatus");
+        console.logBytes(vars.relayCallStatus);
         // #endif
-
 
         (vars.status, vars.relayedCallReturnValue) = abi.decode(vars.relayCallStatus, (RelayCallStatus, bytes));
         if ( vars.relayedCallReturnValue.length>0 ) {
@@ -490,6 +490,13 @@ contract RelayHubWTF is IRelayHub, Ownable, ERC165 {
             bool success;
             bytes memory retData;
             (success, retData) = relayRequest.relayData.paymaster.call{gas:gasAndDataLimits.preRelayedCallGasLimit}(vars.data);
+
+            // #if ENABLE_CONSOLE_LOG
+            console.log("innerRelayCall Paymaster success", success);
+            console.log("innerRelayCall Paymaster retData");
+            console.logBytes(retData);
+            // #endif
+
             if (!success) {
                 GsnEip712Library.truncateInPlace(retData);
                 revertWithStatus(RelayCallStatus.RejectedByPreRelayed, retData);
@@ -502,11 +509,24 @@ contract RelayHubWTF is IRelayHub, Ownable, ERC165 {
         {
             bool forwarderSuccess;
             (forwarderSuccess, vars.relayedCallSuccess, vars.relayedCallReturnValue) = GsnEip712Library.execute(domainSeparatorName, relayRequest, signature);
+
+            // #if ENABLE_CONSOLE_LOG
+            console.log("innerRelayCall forwarderSuccess", forwarderSuccess);
+            console.log("innerRelayCall vars.relayedCallSuccess", vars.relayedCallSuccess);
+            console.log("innerRelayCall vars.relayedCallReturnValue");
+            console.logBytes(vars.relayedCallReturnValue);
+            // #endif
+
             if ( !forwarderSuccess ) {
                 revertWithStatus(RelayCallStatus.RejectedByForwarder, vars.relayedCallReturnValue);
             }
 
             if (vars.rejectOnRecipientRevert && !vars.relayedCallSuccess) {
+                // #if ENABLE_CONSOLE_LOG
+                console.log("innerRelayCall vars.rejectOnRecipientRevert", vars.rejectOnRecipientRevert);
+                console.log("innerRelayCall!vars.relayedCallSuccess", !vars.relayedCallSuccess);
+                // #endif
+
                 // we trusted the recipient, but it reverted...
                 revertWithStatus(RelayCallStatus.RejectedByRecipientRevert, vars.relayedCallReturnValue);
             }

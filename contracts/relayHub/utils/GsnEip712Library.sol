@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 import "../utils/GsnTypes.sol";
 import "../../interfaces/IERC2771Recipient.sol";
 import "../../interfaces/IForwarder.sol";
@@ -99,6 +101,10 @@ library GsnEip712Library {
         (bytes memory suffixData) = splitRequest(relayRequest);
         bytes32 _domainSeparator = domainSeparator(domainSeparatorName, relayRequest.relayData.forwarder);
         /* solhint-disable-next-line avoid-low-level-calls */
+
+        console.log("GsnEip712Lib _domainSeparator");
+        console.logBytes32(_domainSeparator);
+
         (forwarderSuccess, ret) = relayRequest.relayData.forwarder.call(
             abi.encodeWithSelector(IForwarder.execute.selector,
             relayRequest.request, _domainSeparator, RELAY_REQUEST_TYPEHASH, suffixData, signature
@@ -134,7 +140,23 @@ library GsnEip712Library {
         }
     }
 
-    function hashDomain(EIP712Domain memory req) internal pure returns (bytes32) {
+    function hashDomain(EIP712Domain memory req) internal /**pure*/ view returns (bytes32) {
+        console.log("hashDomain domainValue");
+        console.logBytes(abi.encode(
+                EIP712DOMAIN_TYPEHASH,
+                keccak256(bytes(req.name)),
+                keccak256(bytes(req.version)),
+                req.chainId,
+                req.verifyingContract));
+
+        console.log("hashDomain domainHash");
+        console.logBytes32(keccak256(abi.encode(
+                EIP712DOMAIN_TYPEHASH,
+                keccak256(bytes(req.name)),
+                keccak256(bytes(req.version)),
+                req.chainId,
+                req.verifyingContract)));
+
         return keccak256(abi.encode(
                 EIP712DOMAIN_TYPEHASH,
                 keccak256(bytes(req.name)),

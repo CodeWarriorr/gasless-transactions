@@ -52,8 +52,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const unstakeDelay = '0';
   const amount = ethers.utils.parseEther('10');
   const TestToken = await ethers.getContractAt(
-    // 'contracts/paymasters/helpers/TestToken.sol:TestToken',
-    '@opengsn/contracts/src/test/TestToken.sol:TestToken',
+    'contracts/paymasters/helpers/TestToken.sol:TestToken',
+    // '@opengsn/contracts/src/test/TestToken.sol:TestToken',
     await TestUniswap.tokenAddress()
   );
   await TestToken.mint(amount);

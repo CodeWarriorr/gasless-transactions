@@ -9,8 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@opengsn/contracts": "^3.0.0-beta.1",
-    "@opengsn/provider": "^3.0.0-beta.1",
+    "@opengsn/contracts": "^3.0.0-beta.2",
+    "@opengsn/provider": "^3.0.0-beta.2",
     "@openzeppelin/gsn-helpers": "^0.2.4",
     "@uniswap/v3-periphery": "^1.4.2",
     "hardhat": "^2.11.1"

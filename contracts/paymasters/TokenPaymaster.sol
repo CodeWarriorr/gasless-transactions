@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
+import "hardhat/console.sol";
+
 import "./BasePaymaster.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -57,6 +59,11 @@ contract TokenPaymaster is BasePaymaster {
 
     event Received(uint256 eth);
     receive() external override payable {
+        // TODO: why this is overriden ?!
+        
+        // require(address(relayHub) != address(0), "relay hub address not set");
+        // relayHub.depositFor{value:msg.value}(address(this));
+
         emit Received(msg.value);
     }
 
@@ -99,8 +106,18 @@ contract TokenPaymaster is BasePaymaster {
         (signature, approvalData);
 
         (IERC20 token, IUniswapV3 uniswap) = _getToken(relayRequest.relayData.paymasterData);
+        console.log("_preRelayedCall token address", address(token));
+
         (address payer, uint256 tokenPrecharge) = _calculatePreCharge(token, uniswap, relayRequest, maxPossibleGas);
+
+        console.log("_preRelayedCall payer tokenPrecharge", payer, tokenPrecharge);
+
+        console.log("_preRelayedCall balance of payer", token.balanceOf(payer));
+
         token.transferFrom(payer, address(this), tokenPrecharge);
+
+        console.log("_preRelayedCall after token.transferFrom");
+
         return (abi.encode(payer, tokenPrecharge, token, uniswap), false);
     }
 
@@ -115,6 +132,10 @@ contract TokenPaymaster is BasePaymaster {
     virtual
     {
         (address payer, uint256 tokenPrecharge, IERC20 token, IUniswapV3 uniswap) = abi.decode(context, (address, uint256, IERC20, IUniswapV3));
+
+        console.log("_postRelayedCall payer", payer);
+        console.log("_postRelayedCall tokenPrecharge", tokenPrecharge);
+
         _postRelayedCallInternal(payer, tokenPrecharge, 0, gasUseWithoutPost, relayData, token, uniswap);
     }
 
@@ -127,11 +148,18 @@ contract TokenPaymaster is BasePaymaster {
         IERC20 token,
         IUniswapV3 uniswap
     ) internal {
+        console.log("_postRelayedCallInternal");
+
         uint256 ethActualCharge = relayHub.calculateCharge(gasUseWithoutPost + gasUsedByPost, relayData);
+        console.log("_postRelayedCallInternal ethActualCharge", ethActualCharge);
         uint256 tokenActualCharge = uniswap.getTokenToEthOutputPrice(valueRequested + ethActualCharge);
+        console.log("_postRelayedCallInternal tokenActualCharge", tokenActualCharge);
         uint256 tokenRefund = tokenPrecharge - tokenActualCharge;
+        console.log("_postRelayedCallInternal tokenRefund", tokenRefund);
         _refundPayer(payer, token, tokenRefund);
+        console.log("_postRelayedCallInternal after _refundPayer");
         _depositProceedsToHub(ethActualCharge, uniswap);
+        console.log("_postRelayedCallInternal after _depositProceedsToHub");
         emit TokensCharged(gasUseWithoutPost, gasUsedByPost, ethActualCharge, tokenActualCharge);
     }
 
@@ -146,7 +174,12 @@ contract TokenPaymaster is BasePaymaster {
     function _depositProceedsToHub(uint256 ethActualCharge, IUniswapV3 uniswap) private {
         //solhint-disable-next-line
         uniswap.tokenToEthSwapOutput(ethActualCharge, type(uint256).max, block.timestamp+60*15);
+        console.log("_depositProceedsToHub after tokenToEthSwapOut");
+        console.log("_depositProceedsToHub before relayHub.depositFor", ethActualCharge, address(this));
+        console.log("_depositProceedsToHub before relayHub.depositFor balance", address(this).balance);
+
         relayHub.depositFor{value:ethActualCharge}(address(this));
+        console.log("_depositProceedsToHub after relayHub.depositFor");
     }
 
     event TokensCharged(uint256 gasUseWithoutPost, uint256 gasJustPost, uint256 ethActualCharge, uint256 tokenActualCharge);

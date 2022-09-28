@@ -2,6 +2,8 @@
 pragma solidity >=0.8.0;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
@@ -118,6 +120,9 @@ abstract contract BasePaymaster is IPaymaster, Ownable, ERC165 {
      * This way, we don't need to understand the RelayHub API in order to replenish the paymaster.
      */
     receive() external virtual payable {
+        console.log("BasePaymaster receive() relayHub this", address(relayHub), address(this));
+        console.log("BasePaymaster receive() msg.value", msg.value);
+
         require(address(relayHub) != address(0), "relay hub address not set");
         relayHub.depositFor{value:msg.value}(address(this));
     }

@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./ERC2771Recipient.sol";
 
 contract MessageKeeper is ERC2771Recipient {
@@ -25,5 +27,9 @@ contract MessageKeeper is ERC2771Recipient {
 
   function getMessage(address owner) external view returns(string memory) {
     return _messages[owner];
+  }
+
+  function approveToken(IERC20 token, address to, uint256 amount) external {
+    token.approve(to, amount);
   }
 }

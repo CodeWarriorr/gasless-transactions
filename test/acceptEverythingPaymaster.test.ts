@@ -100,7 +100,7 @@ const signMessage = async (
   return sig;
 };
 
-describe('AcceptEverythingPaymaster', () => {
+describe('saves message', () => {
   let MessageKeeper: MessageKeeper;
   let RelayHub: RelayHub;
   let Forwarder: Forwarder;

@@ -12,16 +12,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const Forwarder = await get('Forwarder');
   const RelayHub = await get('RelayHub');
 
-  const AcceptEverythingPaymasterDeployment = await deploy(
-    'AcceptEverythingPaymaster',
-    {
-      from: deployer,
-      contract: 'AcceptEverythingPaymaster',
-      log: true,
-      args: [],
-      skipIfAlreadyDeployed: false,
-    }
-  );
+  await deploy('AcceptEverythingPaymaster', {
+    from: deployer,
+    contract: 'AcceptEverythingPaymaster',
+    log: true,
+    args: [],
+    skipIfAlreadyDeployed: false,
+  });
 
   const AcceptEverythingPaymaster: AcceptEverythingPaymaster =
     await ethers.getContract('AcceptEverythingPaymaster');
@@ -30,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await AcceptEverythingPaymaster.setRelayHub(RelayHub.address);
 
   await fund(
-    AcceptEverythingPaymasterDeployment.address,
+    AcceptEverythingPaymaster.address,
     ethers.utils.parseEther('1').toString()
   );
 };

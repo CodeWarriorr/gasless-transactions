@@ -240,6 +240,9 @@ contract RelayHub is IRelayHub, Ownable, ERC165 {
             relayRequest.relayData
         );
 
+        console.log("verifyGasAndDataLimits Paymaster balance", balances[relayRequest.relayData.paymaster]);
+        console.log("verifyGasAndDataLimits maxPossibleCharge", maxPossibleCharge);
+
         // We don't yet know how much gas will be used by the recipient, so we make sure there are enough funds to pay
         // for the maximum possible charge.
         require(maxPossibleCharge <= balances[relayRequest.relayData.paymaster],
@@ -584,13 +587,24 @@ contract RelayHub is IRelayHub, Ownable, ERC165 {
 
     /// @inheritdoc IRelayHub
     function calculateCharge(uint256 gasUsed, GsnTypes.RelayData calldata relayData) public override virtual view returns (uint256) {
+        console.log("calculateCharge gasUsed", gasUsed);
+        
         uint256 basefee;
         if (relayData.maxFeePerGas == relayData.maxPriorityFeePerGas) {
             basefee = 0;
         } else {
             basefee = block.basefee;
         }
+
+        console.log("calculateCharge relayData.maxFeePerGas", relayData.maxFeePerGas);
+        console.log("calculateCharge tx.gasprice", tx.gasprice);
+        console.log("calculateCharge basefee", basefee);
+        console.log("calculateCharge relayData.maxPriorityFeePerGas", relayData.maxPriorityFeePerGas);
+
         uint256 chargeableGasPrice = Math.min(relayData.maxFeePerGas, Math.min(tx.gasprice, basefee + relayData.maxPriorityFeePerGas));
+
+        console.log("calculateCharge chargeableGasPrice", chargeableGasPrice);
+
         return config.baseRelayFee + (gasUsed * chargeableGasPrice * (config.pctRelayFee + 100)) / 100;
     }
 

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@opengsn/contracts/src/test/TestToken.sol";
+// import "@opengsn/contracts/src/test/TestToken.sol";
+import "./TestToken.sol";
 
 import "../interfaces/IUniswapV3.sol";
 
@@ -15,7 +16,7 @@ contract TestUniswap is IUniswapV3 {
     uint256 public rateDiv;
 
     constructor(uint256 _rateMult, uint256 _rateDiv) payable {
-        token = new TestToken();
+        token = new TestToken(100 ether);
         rateMult = _rateMult;
         rateDiv = _rateDiv;
         require(msg.value > 0, "must specify liquidity");
@@ -32,10 +33,18 @@ contract TestUniswap is IUniswapV3 {
     function tokenToEthSwapOutput(uint256 ethBought, uint256 maxTokens, uint256 deadline) public override returns (uint256 out) {
         (maxTokens, deadline);
         uint256 tokensToSell = getTokenToEthOutputPrice(ethBought);
+
+        console.log("tokenToEthSwapOutput address(this).balance ethBought", address(this).balance, ethBought);
         require(address(this).balance > ethBought, "not enough liquidity");
 
         token.transferFrom(msg.sender, address(this), tokensToSell);
+
+        // Not enough gas IF TokenPaymaster makes anything more than event log
         payable(msg.sender).transfer(ethBought);
+        // payable(msg.sender).call{value: ethBought}("");
+
+        console.log("tokenToEthSwapOutput tokensToSell", tokensToSell);
+
         return tokensToSell;
     }
 

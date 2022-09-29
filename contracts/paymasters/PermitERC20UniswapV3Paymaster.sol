@@ -240,6 +240,11 @@ contract PermitERC20UniswapV3Paymaster is BasePaymaster, ERC2771Recipient {
         (IERC20 token, address payer, uint256 priceQuote, uint256 tokenPreCharge) = abi.decode(context, (IERC20, address, uint256, uint256));
         (uint256 tokenActualCharge, uint256 ethActualCharge) = _calculateCharge(relayData, gasUseWithoutPost + gasUsedByPost, priceQuote);
         require(tokenActualCharge <= tokenPreCharge, "actual charge higher");
+
+        console.log("_postRelayedCall ethActualCharge", ethActualCharge);
+        console.log("_postRelayedCall tokenActualCharge", tokenActualCharge);
+        console.log("_postRelayedCall refund", tokenPreCharge - tokenActualCharge);
+
         token.safeTransfer(payer, tokenPreCharge - tokenActualCharge);
 
         emit TokensCharged(gasUseWithoutPost, gasUsedByPost, tokenActualCharge, ethActualCharge);

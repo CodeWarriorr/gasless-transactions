@@ -249,6 +249,7 @@ describe('PermitERC20UniswapV3Paymaster', () => {
     await swapETHToUSDC(bob, '1');
 
     const ethBalanceBefore = await bob.getBalance();
+    const usdcBalanceBefore = await USDC.connect(bob).balanceOf(bob.address);
 
     const permitSig = await signAndEncodePermitTransaction(
       bob,
@@ -300,5 +301,13 @@ describe('PermitERC20UniswapV3Paymaster', () => {
     const ethBalanceAfter = await bob.getBalance();
     expect(ethBalanceAfter).to.be.eq(ethBalanceBefore);
     expect(await MessageKeeper.getMessage(bob.address)).to.eq(message);
+
+    const usdcBalanceAfter = await USDC.connect(bob).balanceOf(bob.address);
+    console.log(
+      'USDC balance before, after, diff',
+      ethers.utils.formatUnits(usdcBalanceBefore, 6),
+      ethers.utils.formatUnits(usdcBalanceAfter, 6),
+      ethers.utils.formatUnits(usdcBalanceBefore - usdcBalanceAfter, 6)
+    );
   });
 });

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.7;
 pragma experimental ABIEncoderV2;
 
+import "hardhat/console.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -156,7 +158,9 @@ contract PermitERC20UniswapV3Paymaster is BasePaymaster, ERC2771Recipient {
     view
     returns (uint256 tokenCharge, uint256 ethCharge) {
         ethCharge = relayHub.calculateCharge(gasUsed, relayData);
+        console.log("_calculateCharge ethCharge", ethCharge);
         tokenCharge = addPaymasterFee(weiToToken(ethCharge, priceQuote));
+        console.log("_calculateCharge tokenCharge", tokenCharge);
     }
 
     function toActualQuote(uint256 quote, uint256 divisor) public pure returns (uint256) {
@@ -202,18 +206,25 @@ contract PermitERC20UniswapV3Paymaster is BasePaymaster, ERC2771Recipient {
                 tokenSwapData.permitMethodSelector == GsnUtils.getMethodSig(paymasterData[20:]),
                 "wrong \"permit\" method sig");
             // execute permit method for this token
+            console.log("_preRelayedCall permit execution");
             {
                 // solhint-disable-next-line avoid-low-level-calls
                 (bool success, bytes memory ret) = address(token).call(paymasterData[20:]);
+                console.log("_preRelayedCall success", success);
+                console.log("_preRelayedCall ret");
+                console.logBytes(ret);
                 require(success, string(abi.encodePacked("permit call reverted:", string(ret))));
             }
         }
 
         uint256 priceQuote = toActualQuote(uint256(tokenSwapData.priceFeed.latestAnswer()),tokenSwapData.priceDivisor);
+        console.log("_preRelayedCall priceQuote", priceQuote);
 
         (uint256 tokenPreCharge,) = _calculateCharge(relayRequest.relayData, maxPossibleGas, priceQuote);
         address payer = relayRequest.request.from;
+        console.log("_preRelayedCall payer", payer);
         token.safeTransferFrom(payer, address(this), tokenPreCharge);
+        
         return (abi.encode(token, payer, priceQuote, tokenPreCharge), false);
     }
 
@@ -322,7 +333,7 @@ contract PermitERC20UniswapV3Paymaster is BasePaymaster, ERC2771Recipient {
     }
 
     function versionPaymaster() external override virtual view returns (string memory){
-        return "3.0.0-beta.0+opengsn.permit-erc20-uniswap-v3.ipaymaster";
+        return "3.0.0-beta.2+opengsn.permit-erc20-uniswap-v3.ipaymaster";
     }
 
     function getTrustedForwarder() override(BasePaymaster, ERC2771Recipient) public view returns (address forwarder){
